@@ -1,2 +1,4 @@
 # Scientific-computing-lab
-Assignments and stuff related to scientific computing lab 1 at TUM
+Assignment 1 :
+
+Implementing cool computer strategies for Rock paper scissors.
