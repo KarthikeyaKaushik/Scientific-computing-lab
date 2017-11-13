@@ -39,11 +39,11 @@ transm %print transition matrix
 global param_a param_b
 % predict player next move
 r = rand;
-if r <= param_a && r >= 0
+if r <= param_a && r >= 0 
     hnext = mod(j,3) + 1;
 elseif r <= param_b && r >= param_a
     hnext = mod(j+1,3) + 1;
-else 
+else  % I'd write else if r>= param_b && r <=1 but since rand generate between 0-1, else would do. i guess its a useless comment xd
     hnext = j;
 end
 
