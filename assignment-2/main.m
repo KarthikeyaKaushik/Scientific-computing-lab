@@ -27,7 +27,12 @@ for i = 1:size(dt,2)
     Euler_E(i) = sqrt((dt(i)/tend)*sum((yeuler - pexact).^2));
 end
 legend('show')
-
+error_reduction = zeros(1,4);
+for i = 2:4
+    error_reduction(i) = Euler_E(i-1)/Euler_E(i);
+end
+Error_mat_euler = [dt;Euler_E;error_reduction;app_euler];
+error_table_euler = array2table(Error_mat_euler,'RowNames',{'dt','error','error red','error app'})
 
 %% %% Plotting and computing Heun method results
 Heun_E = zeros(1,size(dt,2));
@@ -48,6 +53,13 @@ for i = 1:size(dt,2)
     Heun_E(i) = sqrt((dt(i)/tend)*sum((yheun - pexact).^2));
 end
 legend('show')
+error_reduction = zeros(1,4);
+for i = 2:4
+    error_reduction(i) = Heun_E(i-1)/Heun_E(i);
+end
+Error_mat_heun = [dt;Heun_E;error_reduction;app_heun];
+error_table_heun = array2table(Error_mat_heun,'RowNames',{'dt','error','error red','error app'})
+
 
 %% %% Plotting and computing Runge-Kutta method results
 rk_E = zeros(1,size(dt,2));
@@ -68,6 +80,13 @@ for i = 1:size(dt,2)
     rk_E(i) = sqrt((dt(i)/tend)*sum((yrk - pexact).^2));
 end
 legend('show')
+error_reduction = zeros(1,4);
+for i = 2:4
+    error_reduction(i) = rk_E(i-1)/rk_E(i);
+end
+Error_mat_rk = [dt;rk_E;error_reduction;app_rk];
+error_table_rk = array2table(Error_mat_rk,'RowNames',{'dt','error','error red','error app'})
+
 
 %% %%Function definition for computing p'
 
