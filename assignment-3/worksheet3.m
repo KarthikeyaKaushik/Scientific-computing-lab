@@ -7,6 +7,7 @@ tend = 5;
 y0 = 20;    
 t = 0:0.001:tend;                  % small time step for exact function
 p = 200./(20-10*exp(-7*t));             % exact value
+stability_table = [dt;true(6,size(dt,2))]';
 
 %% %% Plotting and computing Euler method results
 Euler_E = zeros(1,size(dt,2));
@@ -23,6 +24,10 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     Euler_E(i) = sqrt((dt(i)/tend)*sum((yeuler - pexact).^2));
+    if  (Euler_E(i) > 2)
+        stability_table(i,2) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -31,6 +36,7 @@ for i = 2:size(dt,2)
 end
 Error_mat_euler = [dt;Euler_E;error_reduction];
 error_table_euler = array2table(Error_mat_euler,'RowNames',{'dt','error','error red'})
+
 
 %% %% Plotting and computing Heun method results
 Heun_E = zeros(1,size(dt,2));
@@ -47,6 +53,10 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     Heun_E(i) = sqrt((dt(i)/tend)*sum((yheun - pexact).^2));
+    if  (Heun_E(i) > 2)
+        stability_table(i,3) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -70,6 +80,10 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     imp_euler_E(i) = sqrt((dt(i)/tend)*sum((yimpeuler - pexact).^2));
+    if  (imp_euler_E(i) > 2)
+        stability_table(i,4) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -80,6 +94,8 @@ Error_mat_imp_euler = [dt;imp_euler_E;error_reduction];
 error_table_imp_euler = array2table(Error_mat_imp_euler,'RowNames',{'dt','error','error red'})
 
 
+
+
 %% %% Computing Adams Moulton's method results
 ad_mou_E = zeros(1,size(dt,2));
 figure(4)
@@ -88,12 +104,21 @@ title('Adams Moulton method results')
 axis([0 tend 0 15]);
 hold on;
 for i = 1:size(dt,2)
-    yam = ad_mou(y0,dt(i),tend);
+    [yam,flag] = ad_mou(y0,dt(i),tend);
+    if flag == false
+        stability_table(i,5) = false;
+        continue
+    end
     figure(4)
     plot(0:dt(i):tend,yam,'DisplayName',strcat('dt = ',string(dt(i))));
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     ad_mou_E(i) = sqrt((dt(i)/tend)*sum((yam - pexact).^2));
+    
+    if  (ad_mou_E(i) > 2)
+        stability_table(i,5) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -118,6 +143,10 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     ad_mou_L1E(i) = sqrt((dt(i)/tend)*sum((yam - pexact).^2));
+    if  (ad_mou_L1E(i) > 2)
+        stability_table(i,6) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -142,6 +171,10 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     ad_mou_L2E(i) = sqrt((dt(i)/tend)*sum((yam - pexact).^2));
+    if  (ad_mou_L2E(i) > 2) 
+        stability_table(i,7) = false;
+        continue
+    end
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -151,33 +184,45 @@ end
 Error_mat_ad_mouL2 = [dt;ad_mou_L2E;error_reduction];
 error_table_ad_mouL2 = array2table(Error_mat_ad_mouL2,'RowNames',{'dt','error','error red'})
 
+%% %% Code to display stability of method
+
+stability_table = array2table(stability_table,'VariableNames',{'dt','Euler','Heun','imp_Euler','Ad_Mou'...
+    'Ad_Mou_L1','Ad_Mou_L2'})
+
 %% %% Function to compute using implicit Euler method
 function y = imp_euler(y0,dt,tend)
 y = zeros(1,tend/dt+1);
 y(1) = y0;
 for i = 2:(tend/dt+1)
-    y(i) = newton(10^-4,y(i-1),dt,@G,@Gp);
+    [y(i),flag] = newton(10^-4,y(i-1),dt,@G,@Gp);
+    if flag == false
+        return;
+    end
 end
 end
 
 %% %% Function to compute using Adams Moulton method
-function y = ad_mou(y0,dt,tend)
+function [y,flag] = ad_mou(y0,dt,tend)
 y = zeros(1,tend/dt+1);
 y(1) = y0;
 for i = 2:(tend/dt+1)
-    y(i) = newton(10^-4,y(i-1),dt,@F,@Fp);
+    [y(i),flag] = newton(10^-4,y(i-1),dt,@F,@Fp);
+    if flag == false
+        return;
+    end
 end
 end
 
 %% %% Function definition for computing the roots using Newton method
-function root = newton(accuracy,yn,dt,f,fp)
+function [root,flag] = newton(accuracy,yn,dt,f,fp)
+flag = false;
 x = yn + 25*rand;                 % Just a guess. Shouldnt matter much where yn is.
 error = 10;                                % Just to go inside the loop
 iterations = 0;
 if fp(x,dt) < 10*eps
     x = x + 5;               
 end
-while (error>accuracy) && iterations < 15
+while (error>accuracy) && iterations < 60
     x = x - f(x,yn,dt)/fp(x,dt);
     error = abs(f(x,yn,dt));
     iterations = iterations + 1;
@@ -186,6 +231,7 @@ if error > accuracy
     root = NaN;
 else
     root = x;
+    flag = true;
 end
 end
 
