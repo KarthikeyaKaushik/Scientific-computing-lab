@@ -24,7 +24,7 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     Euler_E(i) = sqrt((dt(i)/tend)*sum((yeuler - pexact).^2));
-    if  (Euler_E(i) > 2)
+    if  (Euler_E(i) > 2) || size(find(yeuler<0),2) > 0
         stability_table(i,2) = false;
         continue
     end
@@ -53,7 +53,7 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     Heun_E(i) = sqrt((dt(i)/tend)*sum((yheun - pexact).^2));
-    if  (Heun_E(i) > 2)
+    if  (Heun_E(i) > 2) || size(find(yheun<0),2) > 0
         stability_table(i,3) = false;
         continue
     end
@@ -80,7 +80,7 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     imp_euler_E(i) = sqrt((dt(i)/tend)*sum((yimpeuler - pexact).^2));
-    if  (imp_euler_E(i) > 2)
+    if  (imp_euler_E(i) > 2) || size(find(yimpeuler<0),2) > 0
         stability_table(i,4) = false;
         continue
     end
@@ -114,8 +114,7 @@ for i = 1:size(dt,2)
     hold on;
     pexact = 200./(20-10*exp(-7*(0:dt(i):tend)));
     ad_mou_E(i) = sqrt((dt(i)/tend)*sum((yam - pexact).^2));
-    
-    if  (ad_mou_E(i) > 2)
+    if  (ad_mou_E(i) > 2) || size(find(yam<0),2) > 0
         stability_table(i,5) = false;
         continue
     end
@@ -147,6 +146,13 @@ for i = 1:size(dt,2)
         stability_table(i,6) = false;
         continue
     end
+    num = [-.35*dt(i) 1+7*dt(i) 0];      % Stability criterion using one state variable model
+    den = [0.35*dt(i) 1];
+    [q,d] = polyder(num,den);
+    if abs(polyval(q,10)/polyval(d,10)) > 1 || size(find(yam<0),2) > 0
+        stability_table(i,6) = false;
+    end
+
 end
 legend('show')
 error_reduction = zeros(1,size(dt,2));
@@ -174,6 +180,12 @@ for i = 1:size(dt,2)
     if  (ad_mou_L2E(i) > 2) 
         stability_table(i,7) = false;
         continue
+    end
+    num = [-.35*dt(i) 1+3.5*dt(i) 0];      % Stability criterion using one state variable model
+    den = [0.35 1-3.5*dt(i)];    
+    [q,d] = polyder(num,den);
+    if abs(polyval(q,10)/polyval(d,10)) > 1
+        stability_table(i,7) = false;
     end
 end
 legend('show')
